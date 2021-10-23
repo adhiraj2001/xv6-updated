@@ -104,5 +104,15 @@ struct proc {
   struct context context;      // swtch() here to run process
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
+
   char name[16];               // Process name (debugging)
+
+  // added for waitx custom syscall
+  uint64 rtime;                  // How long the process ran for
+  uint64 ctime;                  // When was the process created
+  uint64 etime;                  // When was the process exited
+
+  int argc;
+  uint64 argv[256];              // Stores the argument
+  int mask;
 };

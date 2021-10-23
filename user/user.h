@@ -2,9 +2,11 @@ struct stat;
 struct rtcdate;
 
 // system calls
+// all the functions for syscalls are defirned here, kinda like standard library for user
 int fork(void);
 int exit(int) __attribute__((noreturn));
 int wait(int*);
+int waitx(int*, int* /*wtime*/ , int* /*rtime*/ ); // defining waitx syscall for user
 int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);
@@ -23,6 +25,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int trace(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

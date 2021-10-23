@@ -23,11 +23,15 @@ argfd(int n, int *pfd, struct file **pf)
 {
   int fd;
   struct file *f;
+  struct proc *p = myproc();
 
   if(argint(n, &fd) < 0)
     return -1;
-  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+  if(fd < 0 || fd >= NOFILE || (f=p->ofile[fd]) == 0)
     return -1;
+
+  // p->argv[p->argc++] = (uint64) f;
+
   if(pfd)
     *pfd = fd;
   if(pf)
@@ -55,6 +59,9 @@ fdalloc(struct file *f)
 uint64
 sys_dup(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   struct file *f;
   int fd;
 
@@ -62,6 +69,7 @@ sys_dup(void)
     return -1;
   if((fd=fdalloc(f)) < 0)
     return -1;
+
   filedup(f);
   return fd;
 }
@@ -69,37 +77,50 @@ sys_dup(void)
 uint64
 sys_read(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   struct file *f;
   int n;
-  uint64 p;
+  uint64 addr;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &addr) < 0)
     return -1;
-  return fileread(f, p, n);
+
+  return fileread(f, addr, n);
 }
 
 uint64
 sys_write(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   struct file *f;
   int n;
-  uint64 p;
+  uint64 addr;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &addr) < 0)
     return -1;
 
-  return filewrite(f, p, n);
+  return filewrite(f, addr, n);
 }
 
 uint64
 sys_close(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   int fd;
   struct file *f;
 
   if(argfd(0, &fd, &f) < 0)
     return -1;
-  myproc()->ofile[fd] = 0;
+
+  p->ofile[fd] = 0;
+
+  
   fileclose(f);
   return 0;
 }
@@ -107,11 +128,16 @@ sys_close(void)
 uint64
 sys_fstat(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   struct file *f;
   uint64 st; // user pointer to struct stat
 
   if(argfd(0, 0, &f) < 0 || argaddr(1, &st) < 0)
     return -1;
+
+
   return filestat(f, st);
 }
 
@@ -119,11 +145,15 @@ sys_fstat(void)
 uint64
 sys_link(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   char name[DIRSIZ], new[MAXPATH], old[MAXPATH];
   struct inode *dp, *ip;
 
   if(argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
     return -1;
+
 
   begin_op();
   if((ip = namei(old)) == 0){
@@ -184,6 +214,10 @@ isdirempty(struct inode *dp)
 uint64
 sys_unlink(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
+
   struct inode *ip, *dp;
   struct dirent de;
   char name[DIRSIZ], path[MAXPATH];
@@ -191,6 +225,7 @@ sys_unlink(void)
 
   if(argstr(0, path, MAXPATH) < 0)
     return -1;
+
 
   begin_op();
   if((dp = nameiparent(path, name)) == 0){
@@ -286,6 +321,9 @@ create(char *path, short type, short major, short minor)
 uint64
 sys_open(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   char path[MAXPATH];
   int fd, omode;
   struct file *f;
@@ -354,6 +392,9 @@ sys_open(void)
 uint64
 sys_mkdir(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   char path[MAXPATH];
   struct inode *ip;
 
@@ -362,6 +403,7 @@ sys_mkdir(void)
     end_op();
     return -1;
   }
+
   iunlockput(ip);
   end_op();
   return 0;
@@ -370,6 +412,9 @@ sys_mkdir(void)
 uint64
 sys_mknod(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   struct inode *ip;
   char path[MAXPATH];
   int major, minor;
@@ -382,6 +427,7 @@ sys_mknod(void)
     end_op();
     return -1;
   }
+
   iunlockput(ip);
   end_op();
   return 0;
@@ -393,12 +439,15 @@ sys_chdir(void)
   char path[MAXPATH];
   struct inode *ip;
   struct proc *p = myproc();
+
+  p->argc = 0;
   
   begin_op();
   if(argstr(0, path, MAXPATH) < 0 || (ip = namei(path)) == 0){
     end_op();
     return -1;
   }
+
   ilock(ip);
   if(ip->type != T_DIR){
     iunlockput(ip);
@@ -415,6 +464,9 @@ sys_chdir(void)
 uint64
 sys_exec(void)
 {
+  struct proc* p = myproc();
+  p->argc = 0;
+
   char path[MAXPATH], *argv[MAXARG];
   int i;
   uint64 uargv, uarg;
@@ -422,6 +474,7 @@ sys_exec(void)
   if(argstr(0, path, MAXPATH) < 0 || argaddr(1, &uargv) < 0){
     return -1;
   }
+
   memset(argv, 0, sizeof(argv));
   for(i=0;; i++){
     if(i >= NELEM(argv)){
@@ -457,15 +510,20 @@ sys_exec(void)
 uint64
 sys_pipe(void)
 {
+
   uint64 fdarray; // user pointer to array of two integers
   struct file *rf, *wf;
   int fd0, fd1;
   struct proc *p = myproc();
 
+  p->argc = 0;
+
   if(argaddr(0, &fdarray) < 0)
     return -1;
   if(pipealloc(&rf, &wf) < 0)
     return -1;
+
+
   fd0 = -1;
   if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
     if(fd0 >= 0)

@@ -37,16 +37,22 @@ argraw(int n)
   struct proc *p = myproc();
   switch (n) {
   case 0:
+    p->argv[p->argc++] = p->trapframe->a0;
     return p->trapframe->a0;
   case 1:
+    p->argv[p->argc++] = p->trapframe->a1;
     return p->trapframe->a1;
   case 2:
+    p->argv[p->argc++] = p->trapframe->a2;
     return p->trapframe->a2;
   case 3:
+    p->argv[p->argc++] = p->trapframe->a3;
     return p->trapframe->a3;
   case 4:
+    p->argv[p->argc++] = p->trapframe->a4;
     return p->trapframe->a4;
   case 5:
+    p->argv[p->argc++] = p->trapframe->a5;
     return p->trapframe->a5;
   }
   panic("argraw");
@@ -58,6 +64,7 @@ int
 argint(int n, int *ip)
 {
   *ip = argraw(n);
+
   return 0;
 }
 
@@ -68,6 +75,7 @@ int
 argaddr(int n, uint64 *ip)
 {
   *ip = argraw(n);
+
   return 0;
 }
 
@@ -80,6 +88,7 @@ argstr(int n, char *buf, int max)
   uint64 addr;
   if(argaddr(n, &addr) < 0)
     return -1;
+
   return fetchstr(addr, buf, max);
 }
 
@@ -102,8 +111,10 @@ extern uint64 sys_sbrk(void);
 extern uint64 sys_sleep(void);
 extern uint64 sys_unlink(void);
 extern uint64 sys_wait(void);
+extern uint64 sys_waitx(void); // sys_waitx declaration which is handler for waitx syscall 
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
+extern uint64 sys_trace(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,8 +138,12 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_waitx]   sys_waitx, // letting kernel know sys_waitx handler to be called for waitx syscall
+[SYS_trace]   sys_trace,
 };
 
+// p->trapframe->a7 = syscall number
+// p->trapframe->a0 = syscall return value
 void
 syscall(void)
 {
@@ -138,6 +153,27 @@ syscall(void)
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     p->trapframe->a0 = syscalls[num]();
+
+    if((p->mask>>p->trapframe->a7) & 1) {
+      printf("%d: syscall %s", p->pid, p->name);
+      printf(" (");
+
+      if(p->argc == 0) {
+        printf("0");
+      } else {
+        for(int i=0; i < p->argc; i++) {
+          printf("%d", p->argv[i]);
+
+          if(i < p->argc - 1) {
+            printf(" ");
+          }
+        }
+      }
+
+      printf(") ");
+      printf("-> %d\n", p->trapframe->a0);
+    }
+
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);

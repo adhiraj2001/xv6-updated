@@ -29,8 +29,8 @@ trapinithart(void)
   w_stvec((uint64)kernelvec);
 }
 
-//
-// handle an interrupt, exception, or system call from user space.
+// 
+// handle an interrupt, exception, or system call from || user space ||.
 // called from trampoline.S
 //
 void
@@ -159,18 +159,25 @@ kerneltrap()
   w_sstatus(sstatus);
 }
 
+// this is happening on scheduler thread therefore myproc() will not return any processes
+
 void
 clockintr()
 {
   acquire(&tickslock);
   ticks++;
+
+  // Created for custom syscall waitx
+  // will use this function since this function works on scheduler thread thus myproc() won't return any processes
+  update_time();
+
   wakeup(&ticks);
   release(&tickslock);
 }
 
-// check if it's an external interrupt or software interrupt,
+// check if it's an || external interrupt or software interrupt ||,
 // and handle it.
-// returns 2 if timer interrupt,
+// || returns 2 if timer interrupt ||,
 // 1 if other device,
 // 0 if not recognized.
 int
