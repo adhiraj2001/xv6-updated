@@ -6,7 +6,7 @@ struct rtcdate;
 int fork(void);
 int exit(int) __attribute__((noreturn));
 int wait(int*);
-int waitx(int*, int* /*wtime*/ , int* /*rtime*/ ); // defining waitx syscall for user
+int waitx(int*, int* /*rtime*/ , int* /*wtime*/ ); // defining waitx syscall for user
 int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);

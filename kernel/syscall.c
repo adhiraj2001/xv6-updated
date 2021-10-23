@@ -142,6 +142,32 @@ static uint64 (*syscalls[])(void) = {
 [SYS_trace]   sys_trace,
 };
 
+static char (*syscall_names[]) = {
+[SYS_fork]    "fork",
+[SYS_exit]    "exit",
+[SYS_wait]    "wait",
+[SYS_pipe]    "pipe",
+[SYS_read]    "read",
+[SYS_kill]    "kill",
+[SYS_exec]    "exec",
+[SYS_fstat]   "fstat",
+[SYS_chdir]   "chdir",
+[SYS_dup]     "dup",
+[SYS_getpid]  "getpid",
+[SYS_sbrk]    "sbrk",
+[SYS_sleep]   "sleep",
+[SYS_uptime]  "uptime",
+[SYS_open]    "open",
+[SYS_write]   "write",
+[SYS_mknod]   "mknod",
+[SYS_unlink]  "unlink",
+[SYS_link]    "link",
+[SYS_mkdir]   "mkdir",
+[SYS_close]   "close",
+[SYS_waitx]   "waitx",
+[SYS_trace]   "trace",
+};
+
 // p->trapframe->a7 = syscall number
 // p->trapframe->a0 = syscall return value
 void
@@ -155,22 +181,18 @@ syscall(void)
     p->trapframe->a0 = syscalls[num]();
 
     if((p->mask>>p->trapframe->a7) & 1) {
-      printf("%d: syscall %s", p->pid, p->name);
+      printf("%d: syscall %s", p->pid, syscall_names[num]);
+
       printf(" (");
+      for(int i=0; i<p->argc; i++) {
+        printf("%d", p->argv[i]);
 
-      if(p->argc == 0) {
-        printf("0");
-      } else {
-        for(int i=0; i < p->argc; i++) {
-          printf("%d", p->argv[i]);
-
-          if(i < p->argc - 1) {
-            printf(" ");
-          }
+        if(i < p->argc-1) {
+          printf(" ");
         }
       }
-
       printf(") ");
+
       printf("-> %d\n", p->trapframe->a0);
     }
 

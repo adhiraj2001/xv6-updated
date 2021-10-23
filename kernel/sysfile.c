@@ -30,7 +30,6 @@ argfd(int n, int *pfd, struct file **pf)
   if(fd < 0 || fd >= NOFILE || (f=p->ofile[fd]) == 0)
     return -1;
 
-  // p->argv[p->argc++] = (uint64) f;
 
   if(pfd)
     *pfd = fd;

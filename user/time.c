@@ -23,9 +23,9 @@ main(int argc, char ** argv)
       exit(1);
     }  
   } else {
-    int rtime, wtime;
+    int rtime = 0, wtime = 0;
     waitx(0, &rtime, &wtime);
-    printf("\nwaiting:%d\nrunning:%d\n", wtime, rtime);
+    printf("\nrunning: %d \nwaiting: %d \n", rtime, wtime);
   }
 
   exit(0);

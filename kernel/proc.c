@@ -144,8 +144,10 @@ found:
   // added for waitx custom syscall
   p->rtime = 0;
   p->etime = 0;
-  p->argc = 0;
   p->ctime = ticks;
+
+  p->mask = 0;
+  p->argc = 0;
 
   return p;
 }

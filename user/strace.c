@@ -21,11 +21,14 @@ main(int argc, char ** argv)
   }
 
   if(trace(mask) < 0) {
-    printf("strace: trace function execution failed.\n");
+    printf("strace: 'trace' syscall execution failed.\n");
     exit(1);
   }
 
-  exec(argv[2], argv + 2);
+  if(exec(argv[2], argv + 2) < 0) {
+    printf("exec: '%s' command execution failed.\n");
+    exit(1);
+  }
 
   exit(0);
 }
