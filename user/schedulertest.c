@@ -9,8 +9,8 @@
 
 int main() {
   int n, pid;
-  int wtime, rtime;
-  int twtime=0, trtime=0;
+  int rtime, wtime;
+  int trtime=0, twtime=0;
   for(n=0; n < NFORK;n++) {
       pid = fork();
       if (pid < 0)
@@ -25,7 +25,7 @@ int main() {
 #ifndef FCFS
           }
 #endif
-          printf("Process %d finished", n);
+          printf("Process %d finished\n", n);
           exit(0);
       } else {
 #ifdef PBS
@@ -34,11 +34,14 @@ int main() {
       }
   }
   for(;n > 0; n--) {
-      if(waitx(0,&wtime,&rtime) >= 0) {
+      if(waitx(0,&rtime,&wtime) >= 0) {
           trtime += rtime;
           twtime += wtime;
       } 
   }
-  printf("Average rtime %d,  wtime %d\n", trtime / NFORK, twtime / NFORK);
+
+  printf("\n\nTotal rtime: %d \nTotal wtime: %d\n", trtime, twtime);
+  printf("\nAverage rtime: %d \nAverage wtime: %d\n\n", trtime / NFORK, twtime / NFORK);
+
   exit(0);
 }

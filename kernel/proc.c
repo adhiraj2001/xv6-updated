@@ -518,6 +518,36 @@ void update_time() {
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
+// void
+// scheduler(void)
+// {
+//   struct proc *p;
+//   struct cpu *c = mycpu();
+  
+//   c->proc = 0;
+//   for(;;){
+//     // Avoid deadlock by ensuring that devices can interrupt.
+//     intr_on();
+
+//     for(p = proc; p < &proc[NPROC]; p++) {
+//       acquire(&p->lock);
+//       if(p->state == RUNNABLE) {
+//         // Switch to chosen process.  It is the process's job
+//         // to release its lock and then reacquire it
+//         // before jumping back to us.
+//         p->state = RUNNING;
+//         c->proc = p;
+//         swtch(&c->context, &p->context);
+
+//         // Process is done running for now.
+//         // It should have changed its p->state before coming back.
+//         c->proc = 0;
+//       }
+//       release(&p->lock);
+//     }
+//   }
+// }
+
 void
 scheduler(void)
 {
@@ -529,21 +559,40 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
+    struct proc *p_min = 0;
+
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
+        
+        // choose the process with minimum creation time
+
+        if(p_min == 0 || p->ctime < p_min->ctime) {
+          p_min = p;
+        }
+
+      }
+      release(&p->lock);
+    }
+
+    if(p_min != 0) {
+      acquire(&p_min->lock);
+      if(p_min->state == RUNNABLE) {
+
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
+
+        p_min->state = RUNNING;
+        c->proc = p_min;
+        swtch(&c->context, &p_min->context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
+
         c->proc = 0;
       }
-      release(&p->lock);
+      release(&p_min->lock);
     }
   }
 }
