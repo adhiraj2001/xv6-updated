@@ -112,7 +112,24 @@ struct proc {
   uint64 ctime;                  // When was the process created
   uint64 etime;                  // When was the process exited
 
-  int argc;
+  int argc;                      // Number of arguments
   uint64 argv[256];              // Stores the argument
-  int mask;
+  int mask;                      // Mask
+
+  int priority;
+  int niceness;
+  uint64 stime;                   // How long the process was sleeping
+  int no_sched;                   // Number of times process has been scheduled
+  uint64 last_rtime;              // Total Runtime from last cpu time
+  uint64 last_stime;              // Total Sleeping time from last cpu time
+
+  int queue_priority;
+  uint64 queue_ctime;             // creation time in current queue
+  uint64 queue_rtime;             // runtime in current queue
+  uint64 queue_time[NQUEUE];      // Time spent in each queue
+};
+
+struct queue {
+  struct proc* procs[NPROC];
+  int sz;
 };

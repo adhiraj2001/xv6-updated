@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_waitx  22 // waitx syscall number
 #define SYS_trace  23
+#define SYS_set_priority 24

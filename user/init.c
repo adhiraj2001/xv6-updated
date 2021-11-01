@@ -24,6 +24,16 @@ main(void)
   dup(0);  // stderr
 
   for(;;){
+    #ifdef FCFS
+    printf("\nSCHEDULER = FCFS\n\n");
+    #elif PBS
+    printf("\nSCHEDULER = PBS\n\n");
+    #elif MLFQ
+    printf("\nSCHEDULER = MLFQ\n\n");
+    #else
+    printf("\nSCHEDULER = DEFAULT\n\n");
+    #endif
+
     printf("init: starting sh\n");
     pid = fork();
     if(pid < 0){

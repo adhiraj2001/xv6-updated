@@ -105,6 +105,23 @@ sys_trace(void)
   return 0;
 }
 
+//Handler for trace cusom syscall
+uint64
+sys_set_priority(void)
+{
+  struct proc* p = myproc();
+  p->argc = 0;
+
+  int new_priority, pid;
+  if(argint(0, &new_priority) < 0)
+    return -1;
+
+  if(argint(1, &pid) < 0)
+    return -1;
+
+  return set_priority(new_priority, pid);
+}
+
 uint64
 sys_sbrk(void)
 {

@@ -8,6 +8,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct queue;
 
 // bio.c
 void            binit(void);
@@ -107,6 +108,10 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 void            update_time(void); // update_time function declaration
 int             trace(uint64);
+int             set_priority(int, int);
+void            mlfq_init(void);
+int             max(int, int);
+int             min(int, int);
 
 // swtch.S
 void            swtch(struct context*, struct context*);

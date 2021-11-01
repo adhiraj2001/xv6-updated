@@ -115,6 +115,7 @@ extern uint64 sys_waitx(void); // sys_waitx declaration which is handler for wai
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
 extern uint64 sys_trace(void);
+extern uint64 sys_set_priority(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -140,6 +141,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_waitx]   sys_waitx, // letting kernel know sys_waitx handler to be called for waitx syscall
 [SYS_trace]   sys_trace,
+[SYS_set_priority]   sys_set_priority,
 };
 
 static char (*syscall_names[]) = {
@@ -166,6 +168,7 @@ static char (*syscall_names[]) = {
 [SYS_close]   "close",
 [SYS_waitx]   "waitx",
 [SYS_trace]   "trace",
+[SYS_set_priority]   "set_priority",
 };
 
 // p->trapframe->a7 = syscall number

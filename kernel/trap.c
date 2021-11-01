@@ -76,9 +76,11 @@ usertrap(void)
   if(p->killed)
     exit(-1);
 
+  #if defined(DEFAULT)
   // give up the CPU if this is a ||timer interrupt||.
-  // if(which_dev == 2)
-  //   yield();
+  if(which_dev == 2)
+    yield();
+  #endif
 
   usertrapret();
 }
@@ -149,9 +151,11 @@ kerneltrap()
     panic("kerneltrap");
   }
 
+  #if defined(DEFAULT)
   // give up the CPU if this is a ||timer interrupt||.
-  // if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
-  //   yield();
+  if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
+    yield();
+  #endif
 
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
@@ -160,7 +164,6 @@ kerneltrap()
 }
 
 // this is happening on scheduler thread therefore myproc() will not return any processes
-
 void
 clockintr()
 {

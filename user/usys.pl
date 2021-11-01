@@ -38,3 +38,4 @@ entry("sleep");
 entry("uptime");
 entry("waitx"); # Letting user know waitx syscall exists
 entry("trace");
+entry("set_priority");
