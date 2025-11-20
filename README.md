@@ -1,82 +1,88 @@
-# Assignment - 4 : xv6
+# xv6 Operating System
 
-## Spec1
+xv6 is a teaching operating system that reimplements Unix Version 6 for the RISC-V architecture. This project extends xv6 with custom system calls and multiple CPU scheduling algorithms to demonstrate core OS concepts including process management, scheduling, and kernel programming.
 
-### strace() syscall:
+## Building and Running
 
-- Made required changes to the following files to add the syscall:
+### Prerequisites
+- RISC-V toolchain (riscv64-unknown-elf or riscv64-linux-gnu)
+- QEMU for RISC-V (qemu-system-riscv64)
 
-1. `syscall.h`
-2. `defs.h`
-3. `user.h`
-4. `sysproc.c`
-5. `usys.S`
-6. `syscall.c`
+### Build Commands
 
-- Added `rtime`, `stime`, `etime` in `struct proc`.
+```bash
+# Build and run with default Round Robin scheduler
+make qemu
 
-- There values update acccording to `clockitr()`.
+# Build with specific scheduler
+make qemu SCHEDULER=FCFS      # First Come First Served
+make qemu SCHEDULER=PBS       # Priority Based Scheduler
+make qemu SCHEDULER=MLFQ      # Multi-Level Feedback Queue
 
-- Added `strace.c` user program in `user` and `Makefile`.
+# Exit QEMU: Press Ctrl-A then X
+```
 
-## Schedulers:
+## Implementation Details
 
-Added `SCHEDULER` object in `Makefile`.
+### System Calls
 
-### FCFS
+#### strace - System Call Tracer
+- Intercepts and logs system calls made by processes
+- Uses bitmask to selectively trace specific syscalls
+- Trace mask inherited by child processes through fork
 
-- Iterate over all processes and select the one with lowest creation time which has status `RUNNABLE`.
+#### waitx - Extended Wait
+- Returns detailed timing statistics: runtime, sleep time, exit time
+- Used for benchmarking scheduler performance
 
-### PBS
+#### set_priority - Priority Modification
+- Dynamically modifies process static priority for PBS scheduler
+- Triggers rescheduling when priority is increased
 
-- Added `priority` and `niceness` in `struct proc`.
+---
 
-- Process is selected according to the defined Dynamic Priority.
+### Schedulers
 
-- After process is scheduled, niceness is updated according to runtime and waiting time for the process.
+#### 1. FCFS (First Come First Served)
+- Non-preemptive scheduler selecting process with lowest creation time
+- Avg runtime: 44 ticks | Avg wait: 54 ticks
 
-- Added `set_priority` syscall to change the static priority of the process.
+#### 2. PBS (Priority-Based Scheduler)
+- Dynamic priority: `max(0, min(Static Priority - niceness + 5, 100))`
+- Niceness: `(sleep_time / (runtime + sleep_time)) × 10`
+- I/O-bound processes get priority boosts
+- Avg runtime: 24 ticks | Avg wait: 108 ticks
 
-- Added `setpriority` user program in the `user` and `Makefile`.
+#### 3. MLFQ (Multi-Level Feedback Queue)
+- 5 priority queues (0 = highest) with time slices: 1, 2, 4, 8, 16 ticks
+- Aging: Processes waiting >50 ticks promoted to prevent starvation
+- **Exploitation:** Process can yield before time slice expires to avoid demotion
 
-### MLFQ
+---
 
-- Added `queue_priority` to store current queue priority.
+## Performance Comparison
 
-- `mlfq_init()`, initializes the required values of queues.
+Benchmarked using `schedulertest`:
 
-- `push(proc, pr)`, pushes the given proc into the queue whose number is pr.
+| Scheduler | Avg Runtime | Avg Wait Time | Total Runtime | Total Wait Time | Analysis |
+|-----------|-------------|---------------|---------------|-----------------|----------|
+| **DEFAULT (RR)** | 18 | 117 | 189 | 1171 | Best runtime due to fair time-slicing; high wait time from frequent context switches |
+| **FCFS** | 44 | 54 | 449 | 547 | Highest runtime, lowest wait time; processes run to completion; convoy effect |
+| **PBS** | 24 | 108 | 244 | 1084 | Best balance; dynamic priority adapts to I/O vs CPU-bound processes |
+| **MLFQ** | - | - | - | - | Adaptive multi-queue; favors interactive processes with aging |
 
-- `pop(proc, pr)`, removes the given proc from the queue whose number is pr and shifts the PBCs coming after it one step to the left.
+**Key Insight:** No universally "best" scheduler. Round Robin excels for interactive systems, FCFS for batch processing, PBS/MLFQ for mixed workloads. Choice depends on workload characteristics and priorities.
 
-- We iterate over all process and select the first process with hight priority. And then implement different time slices for different queues.
+---
 
-- Aging and starvation is also implemented for this.
+## User Programs
 
-### How could this be exploited by a process (MLFQ)?
+Once xv6 boots, available commands include:
 
-- If a process gives up CPU before MAX_AGE, it will not demote to lower priority.
-
-- Thus proccesses can just preempt themselves just before max_age and add themselves to queue again.
-
-- This explotation keeps the process in priority 0, forever.
-
-### Comparison:
-
-- DEFAULT (RR):
-
-Total rtime: 189, Total wtime: 1171
-
-Average rtime: 18, Average wtime: 117
-
-- FCFS
-
-Total rtime: 449, Total wtime: 547
-
-Average rtime: 44, Average wtime: 54
-
-- PBS
-
-Total rtime: 244, Total wtime: 1084
-
-Average rtime: 24, Average wtime: 108
+```bash
+$ ls                    # List files
+$ cat README            # View file
+$ strace ls             # Trace system calls made by ls
+$ setpriority 50 3      # Set priority of process 3 to 50
+$ schedulertest         # Run scheduler benchmark
+```
